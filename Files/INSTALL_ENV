@@ -2,7 +2,8 @@
    append 'exclude=kernel*' to the last of the configuration file:/etc/yum.conf
 
 2, yum -y install wget
-
+   yum -y install gcc gcc-c++ make
+   
 3, install ntfs-3g(for windows and linux filesystem mounting)
    wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
    yum -y install ntfs-3g
@@ -37,19 +38,20 @@
    make && make install
    
 8, install gflags & glog
-   export CXXFLAGS="-fPIC" && export CFLAGS="-fPIC" && cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF .. && make VERBOSE=1
+   export CXXFLAGS="-fPIC" && export CFLAGS="-fPIC" && cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF -DWITH_GFLAGS=ON .. && make VERBOSE=1
 
 9, install ffmpeg[CFLAGS=-fPIC CXXFLAGS=-fPIC CPPFLAGS=-fPIC * --extra-cflags=-fPIC --extra-cxxflags=-fPIC]
    guide: http://trac.ffmpeg.org/wiki/CompilationGuide/Centos
 
    I, install nasm & yasm
-   II, yum -y install autoconf automake bzip2 bzip2-devel cmake freetype-devel gcc gcc-c++ git libtool make mercurial pkgconfig zlib-devel
+   II, yum -y install autoconf automake bzip2 bzip2-devel freetype-devel git libtool mercurial pkgconfig zlib-devel
    III, dependencies
       A, rtmp (git clone git://git.ffmpeg.org/rtmpdump)
          vi librtmp/Makefile (add -fPIC)
          make SHARED=
       B, git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git or https://github.com/FFmpeg/nv-codec-headers.git
          make && make install
+      C, yum -y install cuda-toolkit-9-0 cuda-libraries-dev-9-0
       
       libvpx    ./configure --prefix="$HOME/ffmpeg_build" --extra-cflags=-fPIC --extra-cxxflags=-fPIC --disable-examples --enable-vp8 --disable-unit-tests --enable-vp9-highbitdepth --as=yasm
       libdc1394 ./configure --prefix="$HOME/ffmpeg_build" --disable-examples CFLAGS=-fPIC CPPFLAGS="-fPIC -I$HOME/ffmpeg_build/include/libusb-1.0" LDFLAGS="-L$HOME/ffmpeg_build/lib" LIBUSB_LIBS="$HOME/ffmpeg_build/lib"
@@ -105,4 +107,9 @@ mkdir /usr/local/facecapture/lib64
 
 13, port range
 cat /proc/sys/net/ipv4/ip_local_port_range
+
+14, osip2 && exOsip2
+./configure --prefix=/usr/local/libosip --enable-shared=no --enable-trace=no CFLAGS=-fPIC CXXFLAGS=-fPIC CPPFLAGS=-fPIC
+PKG_CONFIG_PATH="/usr/local/libosip/lib/pkgconfig" ./configure --prefix="/usr/local/libexosip" --enable-shared=no CFLAGS=-fPIC CXXFLAGS=-fPIC CPPFLAGS=-fPIC --enable-openssl=yes OSIP_LIBS="/usr/local/libosip/lib/libosip2.la /usr/local/libosip/lib/libosipparser2.la"
+
 
