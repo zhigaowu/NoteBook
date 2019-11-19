@@ -29,9 +29,15 @@
    yum -y install ice-all-runtime ice-all-devel
    [yum -y install libfreeze-c++-devel freeze-utils] depressed
 
-6, install cmake
-   download source
-   gmake && make install
+6, install cmake(with https support)
+   wget --no-check-certificate https://cmake.org/files/v3.9/cmake-3.9.0.tar.gz
+   tar -zxvf cmake-3.9.0.tar.gz
+   cd cmake-3.9.0
+   # need to build against system curl to get https support
+   # -> install devel packages
+   yum -y install curl-devel zlib-devel
+   ./bootstrap --system-curl
+   make && make install
 
 7, install soci
    cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=RELEASE -DWITH_BOOST=OFF -DWITH_ORACLE=OFF -DWITH_SQLITE3=OFF -DWITH_POSTGRESQL=OFF -DWITH_ODBC=OFF -DWITH_FIREBIRD=OFF -DWITH_DB2=OFF -DSOCI_TESTS=OFF
@@ -60,50 +66,19 @@
       C, configure
 PATH="$HOME/bin:$HOME/ffmpeg_build/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/usr/local/lib/pkgconfig" ./configure --prefix="$HOME/ffmpeg_build" --pkg-config-flags="--static" --extra-cflags="-I$HOME/ffmpeg_build/include -I/usr/local/include -I/usr/local/cuda/include" --extra-ldflags="-L$HOME/ffmpeg_build/lib -L/lib64 -L/usr/local/lib -L/usr/local/cuda/lib64" --extra-libs=-lpthread --extra-libs=-lm --extra-libs=-lusb-1.0 --extra-libs=-ldl --extra-libs=-ldrm --bindir="$HOME/bin" --enable-shared --disable-static --disable-doc --enable-vaapi --enable-encoder=h264_vaapi --enable-vdpau --enable-cuda --enable-cuvid --enable-nvenc --enable-libnpp --enable-libx264 --enable-libx265 --enable-libdc1394 --enable-libxvid --enable-libvpx --enable-librtmp --enable-libfdk-aac --enable-libopus --enable-gpl --enable-nonfree --enable-libmfx
 
-PATH="$HOME/bin:$HOME/ffmpeg_build/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/usr/local/lib/pkgconfig" ./configure --prefix="/usr/local" --pkg-config-flags="--static" --extra-cflags="-I$HOME/ffmpeg_build/include -I/usr/local/include -I/usr/local/cuda/include" --extra-ldflags="-L$HOME/ffmpeg_build/lib -L/lib64 -L/usr/local/lib -L/usr/local/cuda/lib64" --extra-libs=-lpthread --extra-libs=-lm --extra-libs=-ldl --extra-libs=-ldrm --bindir="$HOME/bin" --enable-shared --disable-static --disable-doc --enable-vaapi --enable-encoder=h264_vaapi --enable-vdpau --enable-cuda --enable-cuvid --enable-nvenc --enable-libnpp --enable-libx264 --enable-libx265 --enable-libdc1394 --enable-libxvid --enable-libvpx --enable-librtmp --enable-libfdk-aac --enable-libopus --enable-gpl --enable-nonfree --enable-libmfx
+PATH="$HOME/bin:$HOME/ffmpeg_build/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/usr/local/lib/pkgconfig" ./configure --prefix="/usr/local" --pkg-config-flags="--static" --extra-cflags="-I$HOME/ffmpeg_build/include -I/usr/local/include -I/usr/local/cuda/include" --extra-ldflags="-L$HOME/ffmpeg_build/lib -L/lib64 -L/usr/local/lib -L/usr/local/cuda/lib64" --extra-libs=-lpthread --extra-libs=-lm --extra-libs=-ldl --extra-libs=-ldrm --bindir="$HOME/bin" --enable-shared --disable-static --disable-doc --enable-vaapi --enable-encoder=h264_vaapi --enable-vdpau --enable-cuda --enable-cuvid --enable-nvenc --enable-libnpp --enable-libx264 --enable-libx265 --enable-libaom --enable-libdc1394 --enable-libxvid --enable-libvpx --enable-librtmp --enable-libfdk-aac --enable-libopus --enable-gpl --enable-nonfree --enable-libmfx
 
 10, configure service https://doc.zeroc.com/ice/3.7/release-notes/using-the-linux-binary-distributions
    git clone -b 3.7 https://github.com/zeroc-ice/ice-demos.git
 
-11, facesdk update script
-#!/bin/sh
-
-cp -f /mnt/hgfs/local/3rdParty/pcnrm_4.0.0/include/pcnrm.h /usr/local/facesdk/include
-cp -f /mnt/hgfs/local/decoder_vs2015/hw_decoder/jpeg_coder.hpp /usr/local/facesdk/include
-cp -f FaceSdk/FaceSdk.h /usr/local/facesdk/include
-
-rm -fr Release_x64_gcc48/data
-rm -f Release_x64_gcc48/pc.bin
-rm -fr Release_x64_gcc48/facesdkdemo*
-mv -f Release_x64_gcc48/model /usr/local/facesdk/
-
-cp -fr -d Release_x64_gcc48/* /usr/local/facesdk/lib64/
+11, ffmpeg command
+ffmpeg -vcodec h264_qsv -i rtsp://admin:admin123@192.168.2.252:554 -c -vcodec h264_qsv -an -f flv rtmp://192.168.2.36:1935/live/192.168.2.252
+ffmpeg -i cq2.mp4 -acodec copy -an -f flv rtmp://192.168.2.36:1935/live/1
+ffmpeg -i rtsp://192.168.2.222/av0_0 -acodec copy -an -f flv rtmp://192.168.2.157:1935/live/1
 
 12, prepare path
-mkdir /usr/local/facesdk
-mkdir /usr/local/facesdk/include
-mkdir /usr/local/facesdk/model
-mkdir /usr/local/facesdk/lib64
-
-mkdir /usr/local/hw_decoder
-mkdir /usr/local/hw_decoder/include
-mkdir /usr/local/hw_decoder/lib64
-
-mkdir /usr/local/decoder_lic
-mkdir /usr/local/decoder_lic/include
-mkdir /usr/local/decoder_lic/lib64
-
-mkdir /usr/local/streamdecoder
-mkdir /usr/local/streamdecoder/include
-mkdir /usr/local/streamdecoder/lib64
-
-mkdir /usr/local/facedetector
-mkdir /usr/local/facedetector/include
-mkdir /usr/local/facedetector/lib64
-
-mkdir /usr/local/facecapture
-mkdir /usr/local/facecapture/include
-mkdir /usr/local/facecapture/lib64
+#rpm -qpl packetname
+# rpm2cpio pkgname | cpio -ivd
 
 13, port range
 cat /proc/sys/net/ipv4/ip_local_port_range
@@ -112,4 +87,131 @@ cat /proc/sys/net/ipv4/ip_local_port_range
 ./configure --prefix=/usr/local/libosip --enable-shared=no --enable-trace=no CFLAGS=-fPIC CXXFLAGS=-fPIC CPPFLAGS=-fPIC
 PKG_CONFIG_PATH="/usr/local/libosip/lib/pkgconfig" ./configure --prefix="/usr/local/libexosip" --enable-shared=no CFLAGS=-fPIC CXXFLAGS=-fPIC CPPFLAGS=-fPIC --enable-openssl=yes OSIP_LIBS="/usr/local/libosip/lib/libosip2.la /usr/local/libosip/lib/libosipparser2.la"
 
+15, install python
+---------------- prepare -------------------
+# Compilers and related tools:
+yum groupinstall -y "development tools"
+# Libraries needed during compilation to enable all features of Python:
+yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel expat-devel libffi libffi-devel
+# If you are on a clean "minimal" install of CentOS you also need the wget tool:
+yum install -y wget
+---------------- install -----------------------
+# Python 2.7.14:
+wget http://python.org/ftp/python/2.7.14/Python-2.7.14.tar.xz
+tar xf Python-2.7.14.tar.xz
+cd Python-2.7.14
+./configure --prefix=/usr/local --enable-optimizations --enable-unicode=ucs4 --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
+make && make altinstall
+ 
+# Python 3.6.3:
+wget http://python.org/ftp/python/3.6.3/Python-3.6.3.tar.xz
+tar xf Python-3.6.3.tar.xz
+cd Python-3.6.3
+./configure --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
+make && make altinstall
+------------------ strip ---------------------------
+# Strip the Python 2.7 binary:
+strip /usr/local/lib/libpython2.7.so.1.0
+# Strip the Python 3.6 binary:
+strip /usr/local/lib/libpython3.6m.so.1.0
+---------------- install pip --------------------------
+# First get the script:
+wget https://bootstrap.pypa.io/get-pip.py
+ 
+# Then execute it using Python 2.7 and/or Python 3.6:
+python2.7 get-pip.py
+python3.6 get-pip.py
+ 
+# With pip installed you can now do things like this:
+pip2.7 install [packagename]
+pip2.7 install --upgrade [packagename]
+pip2.7 uninstall [packagename]
+---------------- setup env ----------------------
+# Install virtualenv for Python 2.7 and create a sandbox called my27project:
+pip2.7 install virtualenv
+virtualenv my27project
+
+# Use the built-in functionality in Python 3.6 to create a sandbox called my36project:
+python3.6 -m venv my36project
+
+# Check the system Python interpreter version:
+python --version
+# This will show Python 2.6.6
+
+# Activate the my27project sandbox:
+source my27project/bin/activate
+# Check the Python version in the sandbox (it should be Python 2.7.14):
+python --version
+# Deactivate the sandbox:
+deactivate
+
+# Activate the my36project sandbox:
+source my36project/bin/activate
+# Check the Python version in the sandbox (it should be Python 3.6.3):
+python --version
+# Deactivate the sandbox:
+deactivate
+
+pip.conf
+[global]
+index-url = https://mirrors.aliyun.com/pypi/simple/
+extra-index-url =
+	https://pypi.doubanio.com/simple/
+	https://mirrors.ustc.edu.cn/pypi/web/simple/
+	https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/
+
+# update yum acceliration  
+cd /etc/yum.repos.d
+mv CentOS-Base.repo CentOS-Base.repo.bak
+
+wget -O CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
+
+yum clean all
+yum makecache
+
+16, cuda package
+Meta                                     Package	Purpose
+cuda	                  Installs all CUDA Toolkit and Driver packages. Handles upgrading to the next version of the cuda package when it's released.
+cuda-10-1	              Installs all CUDA Toolkit and Driver packages. Remains at version 10.1 until an additional version of CUDA is installed.
+cuda-toolkit-10-1     	Installs all CUDA Toolkit packages required to develop CUDA applications. Does not include the driver.
+cuda-tools-10-1	        Installs all CUDA command line and visual tools.
+cuda-runtime-10-1	      Installs all CUDA Toolkit packages required to run CUDA applications, as well as the Driver packages.
+cuda-compiler-10-1	    Installs all CUDA compiler packages.
+cuda-libraries-10-1	    Installs all runtime CUDA Library packages.
+cuda-libraries-dev-10-1	Installs all development CUDA Library packages.
+cuda-drivers	          Installs all Driver packages. Handles upgrading to the next version of the Driver packages when they're released.
+
+17, tensorflow 
+https://storage.googleapis.com/tensorflow/
+
+18, opencv
+cmake -D CMAKE_BUILD_TYPE=Release \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-4.1.2/modules \
+    -D OPENCV_ENABLE_NONFREE=ON \
+    -D BUILD_EXAMPLES=OFF \
+    -D BUILD_NEW_PYTHON_SUPPORT=ON \
+    -D INSTALL_PYTHON_EXAMPLES=OFF \
+    -D OPENCV_FORCE_PYTHON_LIBS=ON \
+    -D WITH_CUDA=ON \
+    -D WITH_CUDNN=ON \
+    -D CUDNN_INCLUDE_DIR=/usr/local/cuda/include \
+    -D CUDNN_LIBRARY=/usr/local/cuda-10.1/targets/x86_64-linux/lib/libcudnn.so.7 \
+    -D WITH_CUBLAS=ON \
+    -D WITH_TBB=ON \
+    -D WITH_OPENGL=ON \
+    -D WITH_EIGEN=ON \
+    -D WITH_FFMPEG=ON \
+    -D WITH_1394=ON \
+    -D BUILD_opencv_cudacodec=OFF \
+    -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-10.1 \
+    -D CUDA_ARCH_BIN="6.0 6.1 7.0 7.5" -D CUDA_ARCH_PTX="" \
+    ..
+
+https://raw.githubusercontent.com/opencv/opencv_3rdparty/197f87f7e811a9ded35d989b37e50501ff6afaa4/ffmpeg/opencv_videoio_ffmpeg.dll
+https://raw.githubusercontent.com/opencv/opencv_3rdparty/197f87f7e811a9ded35d989b37e50501ff6afaa4/ffmpeg/opencv_videoio_ffmpeg_64.dll
+https://raw.githubusercontent.com/opencv/opencv_3rdparty/197f87f7e811a9ded35d989b37e50501ff6afaa4/ffmpeg/ffmpeg_version.cmake
+
+relay_params
 
