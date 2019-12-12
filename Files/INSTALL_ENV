@@ -213,5 +213,29 @@ https://raw.githubusercontent.com/opencv/opencv_3rdparty/197f87f7e811a9ded35d989
 https://raw.githubusercontent.com/opencv/opencv_3rdparty/197f87f7e811a9ded35d989b37e50501ff6afaa4/ffmpeg/opencv_videoio_ffmpeg_64.dll
 https://raw.githubusercontent.com/opencv/opencv_3rdparty/197f87f7e811a9ded35d989b37e50501ff6afaa4/ffmpeg/ffmpeg_version.cmake
 
-relay_params
+19, gSoap(c interface)
+A, download source code and compile them to generate exe file
+
+B, generate interface file, like:
+   wsdl2h.exe -c -O3 -o onvif.h RemoteDiscoveryBinding.xml MediaBinding.xml DeviceBinding.xml
+   
+C, change onvif.h
+   I, add #import "wsse.h" to support authentication
+   II, change #import "wsdd10.h" to #import "wsdd5.h" as the Notes say
+   
+D, generate stub files
+   soapcpp2 -c -C -x onvif.h -Igsoap\import
+   
+E, copy stdsoap2.h and stdsoap2.c to the compiled stub file
+
+F, in order to use authentication you need copy these files in gsoap\plugin
+   dom.c  mecevp.c  mecevp.h  smdevp.c  smdevp.h  threads.c  threads.h  wsaapi.c  wsaapi.h  wsseapi.c  wsseapi.h
+   
+Notes:   
+This is not a bug, it is caused by a WS-Addressing version mismatch.
+Please see the imported file dependencies:
+#import "wsa.h" (imported via wsdd10.h) is not compatible with #import "wsa5.h" and will lead to a redefinition.
+Replace "wsdd10.h" with "wsdd.h" in onvif.h.
+This will upgrade the WSDD protocol to 2009. If that is a problem, you will need to change "wsdd10.h" to import "wsa5.h" and change all occurrences of wsa__ to wsa5__.
+For convenience, a wsdd5.h import will be included in the upcoming release, so you can simply choose between wsdd5.h (which imports wsa5.h) and wsdd10.h (which imports wsa.h).
 
