@@ -1,0 +1,2 @@
+record one mp4 file ervery 5 minutes:
+ffmpeg -y -rtsp_transport tcp -i rtsp://admin:1dar1dar@192.168.1.115:554 -vcodec copy -f segment -segment_time 300 -segment_format mp4 longxing/05%02d.mp4
