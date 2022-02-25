@@ -1,0 +1,25 @@
+def get_mode_64(width):
+    height = width * 0.5625
+    return math.ceil(height / 64) * 64
+    
+if __name__ == '__main__':
+    #model loaded
+
+    batch = 1
+    width = 1920
+    height = get_mode_64(width)
+    
+    dummy_input = torch.randn(batch, 3, height, width, requires_grad=True).to(device)
+    onnx_weights = "weights/license_plate_{0}_{2}_{1}.onnx".format(batch, height, width)
+    torch.onnx.export(model,  # model being run
+                      dummy_input,  # model input (or a tuple for multiple inputs)
+                      onnx_weights,  # where to save the model
+                      export_params=True,  # store the trained parameter weights inside the model file
+                      opset_version=11,  # the ONNX version to export the model to
+                      do_constant_folding=True,  # whether to execute constant folding for optimization
+                      input_names=['input'],  # the model's input names
+                      output_names=['output'],  # the model's output names
+                      dynamic_axes=None)
+
+    onnx_model = onnx.load(onnx_weights)
+    onnx.checker.check_model(onnx_model)
